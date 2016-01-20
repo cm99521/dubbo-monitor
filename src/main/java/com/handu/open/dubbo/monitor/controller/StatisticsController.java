@@ -18,11 +18,14 @@ package com.handu.open.dubbo.monitor.controller;
 import com.handu.open.dubbo.monitor.DubboMonitorService;
 import com.handu.open.dubbo.monitor.domain.DubboInvoke;
 import com.handu.open.dubbo.monitor.domain.DubboStatistics;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,6 +88,51 @@ public class StatisticsController {
         model.addAttribute("rows", dubboStatisticses);
         model.addAttribute("service", dubboInvoke.getService());
         return "service/statistics";
+    }
+    
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    @ResponseBody
+    public List<DubboStatistics> index1(@ModelAttribute DubboInvoke dubboInvoke) {
+    	// Set default Search Date
+    	if (dubboInvoke.getInvokeDate() == null && dubboInvoke.getInvokeDateFrom() == null && dubboInvoke.getInvokeDateTo() == null) {
+    		dubboInvoke.setInvokeDate(new Date());
+    	}
+    	//获取Service方法
+    	List<String> methods = dubboMonitorService.getMethodsByService(dubboInvoke);
+    	List<DubboInvoke> dubboInvokes;
+    	List<DubboStatistics> dubboStatisticses = new ArrayList<DubboStatistics>();
+    	DubboStatistics dubboStatistics;
+    	for (String method : methods) {
+    		dubboStatistics = new DubboStatistics();
+    		dubboStatistics.setMethod(method);
+    		dubboInvoke.setMethod(method);
+    		dubboInvoke.setType("provider");
+    		dubboInvokes = dubboMonitorService.countDubboInvokeInfo(dubboInvoke);
+    		for (DubboInvoke di : dubboInvokes) {
+    			if (di == null) {
+    				continue;
+    			}
+    			dubboStatistics.setProviderSuccess(di.getSuccess());
+    			dubboStatistics.setProviderFailure(di.getFailure());
+    			dubboStatistics.setProviderAvgElapsed(di.getSuccess() != 0 ? Double.valueOf(String.format("%.4f", di.getElapsed() / di.getSuccess())) : 0);
+    			dubboStatistics.setProviderMaxElapsed(di.getMaxElapsed());
+    			dubboStatistics.setProviderMaxConcurrent(di.getMaxConcurrent());
+    		}
+    		dubboInvoke.setType("consumer");
+    		dubboInvokes = dubboMonitorService.countDubboInvokeInfo(dubboInvoke);
+    		for (DubboInvoke di : dubboInvokes) {
+    			if (di == null) {
+    				continue;
+    			}
+    			dubboStatistics.setConsumerSuccess(di.getSuccess());
+    			dubboStatistics.setConsumerFailure(di.getFailure());
+    			dubboStatistics.setConsumerAvgElapsed(di.getSuccess() != 0 ? Double.valueOf(String.format("%.4f", di.getElapsed() / di.getSuccess())) : 0);
+    			dubboStatistics.setConsumerMaxElapsed(di.getMaxElapsed());
+    			dubboStatistics.setConsumerMaxConcurrent(di.getMaxConcurrent());
+    		}
+    		dubboStatisticses.add(dubboStatistics);
+    	}
+    	return dubboStatisticses;
     }
 
 }

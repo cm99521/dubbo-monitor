@@ -16,6 +16,7 @@
 package com.handu.open.dubbo.monitor.domain;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * DubboService
@@ -30,6 +31,25 @@ public class DubboService implements Serializable {
     private String owner;
     private int providerCount;
     private int consumerCount;
+    
+    private List<DubboProvider> providers;
+    public List<DubboProvider> getProviders() {
+		return providers;
+	}
+
+	public void setProviders(List<DubboProvider> providers) {
+		this.providers = providers;
+	}
+
+	public List<DubboConsumer> getConsumers() {
+		return consumers;
+	}
+
+	public void setConsumers(List<DubboConsumer> consumers) {
+		this.consumers = consumers;
+	}
+
+	private List<DubboConsumer> consumers;
 
     public String getName() {
         return name;
